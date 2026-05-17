@@ -17,7 +17,7 @@ export default function WhatsAppStickyBar({ agence, titre, annonceId }) {
   const waUrl = showWa ? lienWhatsApp(agence.whatsapp, titre) : null
 
   useEffect(() => {
-    const el = document.getElementById('contact-rappel')
+    const el = document.getElementById('contact-whatsapp-bloc')
     if (!el) return
 
     const observer = new IntersectionObserver(

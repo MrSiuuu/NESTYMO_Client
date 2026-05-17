@@ -53,7 +53,7 @@ export default function BlocAgence({ agence, titre, annonceId, variant = 'defaul
         <p className="text-sm text-gray">Agence non renseignee</p>
       )}
 
-      <div className="flex flex-col gap-2.5">
+      <div id="contact-whatsapp-bloc" className="flex flex-col gap-2.5">
         {agence?.show_whatsapp !== false && whatsappUrl ? (
           connecte ? (
             <a
