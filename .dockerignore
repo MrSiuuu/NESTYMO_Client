@@ -1,0 +1,28 @@
+# Coolify / Nixpacks : ne pas envoyer le code Deno (Edge Functions) au build Docker
+supabase/
+
+# Migrations SQL (appliquees sur Supabase cloud, pas sur le VPS)
+migration_*.sql
+
+# Dependances et build locaux (reinstalles dans l'image)
+node_modules
+.next
+out
+
+# Fichiers locaux / outils
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+
+# IDE et logs
+.cursor
+*.log
+npm-debug.log*
+
+# Maquettes et docs (inutiles en prod)
+Design/
+CDC_*.md
+*.md
+!README.md
