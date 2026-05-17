@@ -1,0 +1,16 @@
+# Force Node/Next.js — ignore la detection Deno (supabase/functions dans le repo)
+providers = ["node"]
+
+[variables]
+NODE_VERSION = "22"
+HOSTNAME = "0.0.0.0"
+PORT = "3000"
+
+[phases.install]
+cmds = ["npm ci"]
+
+[phases.build]
+cmds = ["npm run build"]
+
+[start]
+cmd = "npm run start"
