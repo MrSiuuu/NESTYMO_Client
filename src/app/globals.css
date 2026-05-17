@@ -37,3 +37,12 @@
   scrollbar-width: none;
 }
 
+/* Safari iOS : pas de zoom auto au focus si font-size >= 16px */
+@media (max-width: 768px) {
+  input,
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
