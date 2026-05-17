@@ -1,17 +1,39 @@
 @import 'tailwindcss';
 
-/* Variables de fonts — alignées sur next/font (classes sur <html>) */
-@theme inline {
-  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-playfair: var(--font-playfair-display), ui-serif, Georgia, serif;
+/* Variables de marque (CDC Nestymo) - reference pour CSS custom hors Tailwind */
+:root {
+  --color-primary: #e02020;
+  --color-primary-hover: #c41a1a;
+  --color-dark: #111827;
+  --color-gray: #6b7280;
+  --color-border: #e5e7eb;
+  --color-bg: #f5f7fa;
+  --green: #1fa866;
+  --green-hover: #178a53;
+  --gray-25: #fcfcfd;
+  --r-pill: 9999px;
+  --r-card: 16px;
+  --r-cta: 24px;
 }
 
-/* Fiche annonce — grande photo : ratios garantis (Tailwind aspect-[…] arbitraires parfois absents du build v4) */
-.galerie-photo-principale {
-  aspect-ratio: 16 / 7;
+@theme inline {
+  --color-primary: #e02020;
+  --color-primary-hover: #c41a1a;
+  --color-dark: #111827;
+  --color-gray: #6b7280;
+  --color-border: #e5e7eb;
+  --color-surface: #f5f7fa;
+  --color-green: #1fa866;
+  --color-green-hover: #178a53;
+  --color-gray-25: #fcfcfd;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
-@media (width >= 768px) {
-  .galerie-photo-principale {
-    aspect-ratio: 21 / 9;
-  }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+

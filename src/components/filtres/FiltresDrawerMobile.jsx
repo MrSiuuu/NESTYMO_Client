@@ -1,30 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-
-function IconFiltre() {
-  return (
-    <svg
-      className="h-4 w-4"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      aria-hidden
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
-      />
-    </svg>
-  )
-}
+import { Filter, X } from 'lucide-react'
 
 function compteFiltres(f) {
   let n = 0
   if (f.commune) n++
+  if (f.quartier) n++
   if (f.transaction) n++
   if (f.prix_min !== null && f.prix_min !== undefined) n++
   if (f.prix_max !== null && f.prix_max !== undefined) n++
@@ -36,6 +19,7 @@ function compteFiltres(f) {
 function draftVersURL(draft) {
   const p = new URLSearchParams()
   if (draft.commune) p.set('commune', draft.commune)
+  if (draft.quartier) p.set('quartier', draft.quartier)
   if (draft.transaction) p.set('transaction', draft.transaction)
   if (draft.prix_min !== '' && draft.prix_min != null)
     p.set('prix_min', String(draft.prix_min))
@@ -52,23 +36,17 @@ function draftVersURL(draft) {
 export default function FiltresDrawerMobile({
   villes,
   typesBiens,
+  quartiers,
   filtresActifs,
 }) {
   const router = useRouter()
   const [ouvert, setOuvert] = useState(false)
   const [draft, setDraft] = useState(() => ({ ...filtresActifs }))
 
-  useEffect(() => {
+  function ouvrir() {
     setDraft({ ...filtresActifs })
-  }, [
-    filtresActifs.commune,
-    filtresActifs.transaction,
-    filtresActifs.prix_min,
-    filtresActifs.prix_max,
-    filtresActifs.type_bien,
-    filtresActifs.chambres_min,
-    filtresActifs.sort,
-  ])
+    setOuvert(true)
+  }
 
   const nb = compteFiltres(filtresActifs)
 
@@ -80,6 +58,7 @@ export default function FiltresDrawerMobile({
   function reinitialiser() {
     setDraft({
       commune: null,
+      quartier: null,
       transaction: null,
       prix_min: null,
       prix_max: null,
@@ -93,10 +72,10 @@ export default function FiltresDrawerMobile({
     <>
       <button
         type="button"
-        onClick={() => setOuvert(true)}
-        className="flex items-center gap-2 rounded-lg bg-[#1A1A2E] px-4 py-2 text-sm text-white md:hidden"
+        onClick={ouvrir}
+        className="flex cursor-pointer items-center gap-2 rounded-lg bg-dark px-4 py-2 text-sm text-white md:hidden"
       >
-        <IconFiltre />
+        <Filter className="h-4 w-4" aria-hidden />
         Filtres{nb > 0 ? ` (${nb})` : ''}
       </button>
 
@@ -104,37 +83,36 @@ export default function FiltresDrawerMobile({
         <div className="fixed inset-0 z-50 md:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 cursor-pointer bg-black/40"
             aria-label="Fermer"
             onClick={() => setOuvert(false)}
           />
           <div className="absolute bottom-0 left-0 right-0 flex max-h-[92vh] flex-col rounded-t-2xl bg-white shadow-xl">
-            <div className="flex items-center justify-between border-b border-[#E8E3D8] px-4 py-3">
-              <span className="font-medium text-[#0F1923]">Filtres</span>
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <span className="font-medium text-dark">Filtres</span>
               <button
                 type="button"
-                className="p-2 text-xl leading-none text-[#6B7280]"
+                className="cursor-pointer p-2 text-gray"
                 onClick={() => setOuvert(false)}
                 aria-label="Fermer"
               >
-                ✕
+                <X className="h-5 w-5" />
               </button>
             </div>
 
             <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
               <div className="py-3">
-                <p className="mb-2 text-sm font-medium text-[#0F1923]">
-                  Commune
-                </p>
+                <p className="mb-2 text-sm font-medium text-dark">Commune</p>
                 <select
                   value={draft.commune ?? ''}
                   onChange={(e) =>
                     setDraft((d) => ({
                       ...d,
                       commune: e.target.value || null,
+                      quartier: null,
                     }))
                   }
-                  className="w-full rounded-lg border border-[#E8E3D8] px-3 py-3 text-sm"
+                  className="w-full rounded-lg border border-border px-3 py-3 text-sm"
                 >
                   <option value="">Toutes les communes</option>
                   {villes.map((v) => (
@@ -145,10 +123,30 @@ export default function FiltresDrawerMobile({
                 </select>
               </div>
 
-              <div className="border-t border-[#E8E3D8] py-3">
-                <p className="mb-2 text-sm font-medium text-[#0F1923]">
-                  Transaction
-                </p>
+              <div className="border-t border-border py-3">
+                <p className="mb-2 text-sm font-medium text-dark">Quartier</p>
+                <select
+                  value={draft.quartier ?? ''}
+                  disabled={!draft.commune || quartiers.length === 0}
+                  onChange={(e) =>
+                    setDraft((d) => ({
+                      ...d,
+                      quartier: e.target.value || null,
+                    }))
+                  }
+                  className="w-full rounded-lg border border-border px-3 py-3 text-sm disabled:bg-gray-100"
+                >
+                  <option value="">Tous les quartiers</option>
+                  {quartiers.map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.nom}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="border-t border-border py-3">
+                <p className="mb-2 text-sm font-medium text-dark">Transaction</p>
                 <div className="flex flex-col gap-3 text-sm">
                   {[
                     ['', 'Tous'],
@@ -177,10 +175,8 @@ export default function FiltresDrawerMobile({
                 </div>
               </div>
 
-              <div className="border-t border-[#E8E3D8] py-3">
-                <p className="mb-2 text-sm font-medium text-[#0F1923]">
-                  Budget (FCFA)
-                </p>
+              <div className="border-t border-border py-3">
+                <p className="mb-2 text-sm font-medium text-dark">Budget (FCFA)</p>
                 <input
                   type="number"
                   min={0}
@@ -193,7 +189,7 @@ export default function FiltresDrawerMobile({
                       prix_min: e.target.value === '' ? null : e.target.value,
                     }))
                   }
-                  className="mb-2 w-full rounded-lg border border-[#E8E3D8] px-3 py-3 text-sm"
+                  className="mb-2 w-full rounded-lg border border-border px-3 py-3 text-sm"
                 />
                 <input
                   type="number"
@@ -207,14 +203,12 @@ export default function FiltresDrawerMobile({
                       prix_max: e.target.value === '' ? null : e.target.value,
                     }))
                   }
-                  className="w-full rounded-lg border border-[#E8E3D8] px-3 py-3 text-sm"
+                  className="w-full rounded-lg border border-border px-3 py-3 text-sm"
                 />
               </div>
 
-              <div className="border-t border-[#E8E3D8] py-3">
-                <p className="mb-2 text-sm font-medium text-[#0F1923]">
-                  Type de bien
-                </p>
+              <div className="border-t border-border py-3">
+                <p className="mb-2 text-sm font-medium text-dark">Type de bien</p>
                 <select
                   value={draft.type_bien ?? ''}
                   onChange={(e) =>
@@ -223,7 +217,7 @@ export default function FiltresDrawerMobile({
                       type_bien: e.target.value || null,
                     }))
                   }
-                  className="w-full rounded-lg border border-[#E8E3D8] px-3 py-3 text-sm"
+                  className="w-full rounded-lg border border-border px-3 py-3 text-sm"
                 >
                   <option value="">Tous les types</option>
                   {typesBiens.map((t) => (
@@ -234,10 +228,8 @@ export default function FiltresDrawerMobile({
                 </select>
               </div>
 
-              <div className="border-t border-[#E8E3D8] py-3">
-                <p className="mb-2 text-sm font-medium text-[#0F1923]">
-                  Chambres min.
-                </p>
+              <div className="border-t border-border py-3">
+                <p className="mb-2 text-sm font-medium text-dark">Chambres min.</p>
                 <select
                   value={
                     draft.chambres_min != null ? String(draft.chambres_min) : ''
@@ -250,7 +242,7 @@ export default function FiltresDrawerMobile({
                         : null,
                     }))
                   }
-                  className="w-full rounded-lg border border-[#E8E3D8] px-3 py-3 text-sm"
+                  className="w-full rounded-lg border border-border px-3 py-3 text-sm"
                 >
                   <option value="">Peu importe</option>
                   <option value="1">1+</option>
@@ -260,24 +252,24 @@ export default function FiltresDrawerMobile({
                 </select>
               </div>
 
-              <div className="border-t border-[#E8E3D8] py-3">
-                <p className="mb-2 text-sm font-medium text-[#0F1923]">Tri</p>
+              <div className="border-t border-border py-3">
+                <p className="mb-2 text-sm font-medium text-dark">Tri</p>
                 <select
                   value={draft.sort ?? 'recent'}
                   onChange={(e) =>
                     setDraft((d) => ({ ...d, sort: e.target.value }))
                   }
-                  className="w-full rounded-lg border border-[#E8E3D8] px-3 py-3 text-sm"
+                  className="w-full rounded-lg border border-border px-3 py-3 text-sm"
                 >
-                  <option value="recent">Plus récents</option>
+                  <option value="recent">Plus recents</option>
                   <option value="prix_asc">Prix croissant</option>
-                  <option value="prix_desc">Prix décroissant</option>
+                  <option value="prix_desc">Prix decroissant</option>
                 </select>
               </div>
             </div>
 
             <div
-              className="flex gap-3 border-t border-[#E8E3D8] bg-white p-4"
+              className="flex gap-3 border-t border-border bg-white p-4"
               style={{
                 paddingBottom: 'max(1rem, env(safe-area-inset-bottom))',
               }}
@@ -287,14 +279,14 @@ export default function FiltresDrawerMobile({
                 onClick={() => {
                   reinitialiser()
                 }}
-                className="flex-1 rounded-lg border border-[#E8E3D8] py-3 text-sm font-medium text-[#0F1923]"
+                className="flex-1 cursor-pointer rounded-lg border border-border py-3 text-sm font-medium text-dark"
               >
-                Réinitialiser
+                Reinitialiser
               </button>
               <button
                 type="button"
                 onClick={appliquer}
-                className="flex-1 rounded-lg bg-[#D97B00] py-3 text-sm font-medium text-white"
+                className="flex-1 cursor-pointer rounded-lg bg-primary py-3 text-sm font-semibold text-white"
               >
                 Appliquer
               </button>
@@ -305,3 +297,4 @@ export default function FiltresDrawerMobile({
     </>
   )
 }
+

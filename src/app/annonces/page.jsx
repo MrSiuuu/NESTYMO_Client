@@ -1,9 +1,12 @@
 export const revalidate = 60
 
+import Link from 'next/link'
 import {
   getAnnoncesFiltered,
   getDonneesReferenceCached,
+  getQuartiersByVille,
 } from '../../features/annonces/annoncesService'
+import { createClient } from '../../lib/supabase/server'
 import Navbar from '../../components/Navbar'
 import Footer from '../../components/Footer'
 import PropertyGrid from '../../features/annonces/PropertyGrid'
@@ -17,6 +20,19 @@ function first(v) {
   return Array.isArray(v) ? v[0] : v
 }
 
+async function favoriAnnonceIdsForViewer() {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return []
+  const { data } = await supabase
+    .from('favoris')
+    .select('annonce_id')
+    .eq('user_id', user.id)
+  return (data ?? []).map((r) => r.annonce_id)
+}
+
 export async function generateMetadata({ searchParams }) {
   const sp = await searchParams
   const { villes } = await getDonneesReferenceCached()
@@ -24,12 +40,12 @@ export async function generateMetadata({ searchParams }) {
   const communeNom = communeRaw
     ? villes.find((v) => v.id === String(communeRaw))?.nom
     : null
-  const lieu = communeNom || 'Abidjan'
+  const lieu = communeNom || "Cote d'Ivoire"
 
   return {
-    title: `Annonces immobilières à ${lieu} | ImmoCI`,
-    description: `Trouvez des biens immobiliers à ${lieu} — appartements, villas, terrains.`,
-    alternates: { canonical: 'https://immoci.ci/annonces' },
+    title: `Annonces immobilieres a ${lieu}`,
+    description: `Trouvez des biens a ${lieu} - appartements, villas, terrains.`,
+    alternates: { canonical: 'https://nestymo.ci/annonces' },
   }
 }
 
@@ -40,6 +56,12 @@ export default async function AnnoncesPage({ searchParams }) {
   const commune =
     communeRaw && String(communeRaw).trim() !== ''
       ? String(communeRaw)
+      : null
+
+  const quartierRaw = first(sp.quartier)
+  const quartier =
+    quartierRaw && String(quartierRaw).trim() !== ''
+      ? String(quartierRaw)
       : null
 
   const txRaw = first(sp.transaction)
@@ -55,14 +77,14 @@ export default async function AnnoncesPage({ searchParams }) {
   const prix_min =
     first(sp.prix_min) != null &&
     !isNaN(Number(first(sp.prix_min))) &&
-    Number(first(sp.prix_min)) >= 0
+    Number(first(sp.prix_min)) > 0
       ? Number(first(sp.prix_min))
       : null
 
   const prix_max =
     first(sp.prix_max) != null &&
     !isNaN(Number(first(sp.prix_max))) &&
-    Number(first(sp.prix_max)) >= 0
+    Number(first(sp.prix_max)) > 0
       ? Number(first(sp.prix_max))
       : null
 
@@ -83,8 +105,13 @@ export default async function AnnoncesPage({ searchParams }) {
       ? Math.max(1, parseInt(String(pageRaw), 10))
       : 1
 
+  const quartiersListe = commune ? await getQuartiersByVille(commune) : []
+  const quartierValide =
+    quartier && quartiersListe.some((q) => q.id === quartier) ? quartier : null
+
   const filtresActifs = {
     commune,
+    quartier: quartierValide,
     transaction,
     prix_min,
     prix_max,
@@ -97,9 +124,10 @@ export default async function AnnoncesPage({ searchParams }) {
     .filter(([k]) => k !== 'sort')
     .some(([, v]) => v !== null && v !== undefined)
 
-  const [{ annonces, total }, { villes, typesBiens }] = await Promise.all([
+  const [{ annonces, total }, { villes, typesBiens }, favoriIds] = await Promise.all([
     getAnnoncesFiltered({
       commune,
+      quartier: quartierValide,
       transaction,
       prix_min,
       prix_max,
@@ -109,15 +137,18 @@ export default async function AnnoncesPage({ searchParams }) {
       page,
     }),
     getDonneesReferenceCached(),
+    favoriAnnonceIdsForViewer(),
   ])
+
+  const quartiers = quartiersListe
 
   const totalPages = Math.max(1, Math.ceil(total / 12))
 
   const labelTransaction =
     transaction === 'louer'
-      ? 'à louer'
+      ? 'a louer'
       : transaction === 'vendre'
-        ? 'à vendre'
+        ? 'a vendre'
         : transaction === 'bail'
           ? 'en bail'
           : ''
@@ -125,28 +156,30 @@ export default async function AnnoncesPage({ searchParams }) {
   const communeNom = commune
     ? villes.find((v) => v.id === commune)?.nom
     : null
-  const labelCommune = communeNom ? ` à ${communeNom}` : ''
+  const labelCommune = communeNom ? ` a ${communeNom}` : ''
 
   const labelCompteur =
     total > 0
       ? `${total} bien${total > 1 ? 's' : ''}${labelTransaction ? ` ${labelTransaction}` : ''}${labelCommune}`
-      : 'Aucun bien trouvé'
+      : 'Aucun bien trouve'
 
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-[#FAF6EF]">
+      <main className="min-h-screen bg-surface">
         <div className="mx-auto max-w-7xl px-4 pb-2 pt-6 md:px-6">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="min-w-0">
-              <h1 className="font-playfair text-xl font-semibold text-[#0F1923] md:text-2xl">
-                Annonces immobilières à Abidjan
+              <h1 className="text-xl font-semibold text-dark md:text-2xl">
+                Annonces immobilieres
               </h1>
-              <p className="mt-1 text-sm text-[#6B7280]">{labelCompteur}</p>
+              <p className="mt-1 text-sm text-gray">{labelCompteur}</p>
             </div>
             <FiltresDrawerMobile
+              key={`f-${commune ?? ''}-${quartierValide ?? ''}-${transaction ?? ''}-${type_bien ?? ''}-${sort}-${page}-${prix_min ?? ''}-${prix_max ?? ''}-${chambres_min ?? ''}`}
               villes={villes}
               typesBiens={typesBiens}
+              quartiers={quartiers}
               filtresActifs={filtresActifs}
             />
           </div>
@@ -156,6 +189,7 @@ export default async function AnnoncesPage({ searchParams }) {
               filtres={filtresActifs}
               villes={villes}
               typesBiens={typesBiens}
+              quartiers={quartiers}
               searchParams={sp}
             />
           ) : null}
@@ -167,6 +201,7 @@ export default async function AnnoncesPage({ searchParams }) {
               <FiltresSidebarDesktop
                 villes={villes}
                 typesBiens={typesBiens}
+                quartiers={quartiers}
                 filtresActifs={filtresActifs}
               />
             </aside>
@@ -174,22 +209,22 @@ export default async function AnnoncesPage({ searchParams }) {
             <div className="min-w-0 flex-1">
               {annonces.length === 0 ? (
                 <div className="py-16 text-center">
-                  <p className="mb-2 font-medium text-[#0F1923]">
-                    Aucun bien ne correspond à votre recherche
+                  <p className="mb-2 font-medium text-dark">
+                    Aucun bien ne correspond a votre recherche
                   </p>
-                  <p className="mb-6 text-sm text-[#6B7280]">
-                    Essayez de modifier ou réinitialiser vos filtres.
+                  <p className="mb-6 text-sm text-gray">
+                    Modifiez ou reinitialisez vos filtres.
                   </p>
-                  <a
+                  <Link
                     href="/annonces"
-                    className="inline-block rounded-lg bg-[#D97B00] px-5 py-2.5 text-sm font-medium text-white transition hover:bg-[#b86a00]"
+                    className="inline-block rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-hover"
                   >
-                    Réinitialiser les filtres
-                  </a>
+                    Reinitialiser les filtres
+                  </Link>
                 </div>
               ) : (
                 <>
-                  <PropertyGrid annonces={annonces} />
+                  <PropertyGrid annonces={annonces} favoriIds={favoriIds} />
                   {totalPages > 1 ? (
                     <Pagination
                       page={page}
@@ -207,3 +242,4 @@ export default async function AnnoncesPage({ searchParams }) {
     </>
   )
 }
+

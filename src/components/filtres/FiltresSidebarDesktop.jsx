@@ -1,11 +1,12 @@
 import Link from 'next/link'
 
 /**
- * Filtres desktop — formulaire GET, submit uniquement via « Appliquer »
+ * Filtres desktop - formulaire GET, submit via « Appliquer »
  */
 export default function FiltresSidebarDesktop({
   villes,
   typesBiens,
+  quartiers,
   filtresActifs,
 }) {
   const f = filtresActifs
@@ -14,15 +15,14 @@ export default function FiltresSidebarDesktop({
     <form
       method="GET"
       action="/annonces"
-      className="sticky top-24 space-y-0 rounded-xl bg-white p-5 shadow-md"
+      className="sticky top-24 space-y-0 rounded-xl border border-border bg-white p-5 shadow-sm"
     >
-      {/* 1. Commune */}
       <div className="pb-4">
-        <p className="mb-2 text-sm font-medium text-[#0F1923]">Commune</p>
+        <p className="mb-2 text-sm font-medium text-dark">Commune</p>
         <select
           name="commune"
           defaultValue={f.commune ?? ''}
-          className="w-full rounded-lg border border-[#E8E3D8] px-3 py-2 text-sm text-[#0F1923]"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm text-dark"
         >
           <option value="">Toutes les communes</option>
           {villes.map((v) => (
@@ -33,8 +33,26 @@ export default function FiltresSidebarDesktop({
         </select>
       </div>
 
-      <div className="border-t border-[#E8E3D8] py-4">
-        <p className="mb-2 text-sm font-medium text-[#0F1923]">Transaction</p>
+      <div className="border-t border-border py-4">
+        <p className="mb-2 text-sm font-medium text-dark">Quartier</p>
+        <select
+          key={f.commune ?? 'none'}
+          name="quartier"
+          defaultValue={f.quartier ?? ''}
+          disabled={!f.commune || quartiers.length === 0}
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm text-dark disabled:cursor-not-allowed disabled:bg-gray-100"
+        >
+          <option value="">Tous les quartiers</option>
+          {quartiers.map((q) => (
+            <option key={q.id} value={q.id}>
+              {q.nom}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="border-t border-border py-4">
+        <p className="mb-2 text-sm font-medium text-dark">Transaction</p>
         <div className="flex flex-col gap-2 text-sm">
           <label className="flex cursor-pointer items-center gap-2">
             <input
@@ -75,8 +93,8 @@ export default function FiltresSidebarDesktop({
         </div>
       </div>
 
-      <div className="border-t border-[#E8E3D8] py-4">
-        <p className="mb-2 text-sm font-medium text-[#0F1923]">Budget (FCFA)</p>
+      <div className="border-t border-border py-4">
+        <p className="mb-2 text-sm font-medium text-dark">Budget (FCFA)</p>
         <div className="flex flex-col gap-2">
           <input
             type="number"
@@ -85,7 +103,7 @@ export default function FiltresSidebarDesktop({
             step={1000}
             placeholder="Min"
             defaultValue={f.prix_min ?? ''}
-            className="w-full rounded-lg border border-[#E8E3D8] px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm"
           />
           <input
             type="number"
@@ -94,17 +112,17 @@ export default function FiltresSidebarDesktop({
             step={1000}
             placeholder="Max"
             defaultValue={f.prix_max ?? ''}
-            className="w-full rounded-lg border border-[#E8E3D8] px-3 py-2 text-sm"
+            className="w-full rounded-lg border border-border px-3 py-2 text-sm"
           />
         </div>
       </div>
 
-      <div className="border-t border-[#E8E3D8] py-4">
-        <p className="mb-2 text-sm font-medium text-[#0F1923]">Type de bien</p>
+      <div className="border-t border-border py-4">
+        <p className="mb-2 text-sm font-medium text-dark">Type de bien</p>
         <select
           name="type_bien"
           defaultValue={f.type_bien ?? ''}
-          className="w-full rounded-lg border border-[#E8E3D8] px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm"
         >
           <option value="">Tous les types</option>
           {typesBiens.map((t) => (
@@ -115,14 +133,14 @@ export default function FiltresSidebarDesktop({
         </select>
       </div>
 
-      <div className="border-t border-[#E8E3D8] py-4">
-        <p className="mb-2 text-sm font-medium text-[#0F1923]">Chambres min.</p>
+      <div className="border-t border-border py-4">
+        <p className="mb-2 text-sm font-medium text-dark">Chambres min.</p>
         <select
           name="chambres_min"
           defaultValue={
             f.chambres_min != null ? String(f.chambres_min) : ''
           }
-          className="w-full rounded-lg border border-[#E8E3D8] px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm"
         >
           <option value="">Peu importe</option>
           <option value="1">1+</option>
@@ -132,33 +150,34 @@ export default function FiltresSidebarDesktop({
         </select>
       </div>
 
-      <div className="border-t border-[#E8E3D8] py-4">
-        <p className="mb-2 text-sm font-medium text-[#0F1923]">Tri</p>
+      <div className="border-t border-border py-4">
+        <p className="mb-2 text-sm font-medium text-dark">Tri</p>
         <select
           name="sort"
           defaultValue={f.sort ?? 'recent'}
-          className="w-full rounded-lg border border-[#E8E3D8] px-3 py-2 text-sm"
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm"
         >
-          <option value="recent">Plus récents</option>
+          <option value="recent">Plus recents</option>
           <option value="prix_asc">Prix croissant</option>
-          <option value="prix_desc">Prix décroissant</option>
+          <option value="prix_desc">Prix decroissant</option>
         </select>
       </div>
 
-      <div className="border-t border-[#E8E3D8] pt-4">
+      <div className="border-t border-border pt-4">
         <button
           type="submit"
-          className="w-full rounded-lg bg-[#D97B00] py-3 text-sm font-medium text-white transition hover:bg-[#b86a00]"
+          className="w-full cursor-pointer rounded-lg bg-primary py-3 text-sm font-semibold text-white transition hover:bg-primary-hover"
         >
           Appliquer
         </button>
         <Link
           href="/annonces"
-          className="mt-3 block w-full text-center text-sm text-[#6B7280] hover:text-[#0F1923]"
+          className="mt-3 block w-full text-center text-sm text-gray hover:text-dark"
         >
-          Réinitialiser
+          Reinitialiser
         </Link>
       </div>
     </form>
   )
 }
+

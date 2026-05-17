@@ -1,5 +1,5 @@
 -- =============================================================================
--- Olivier Immo — Schéma Supabase (PostgreSQL)
+-- Olivier Immo - Schéma Supabase (PostgreSQL)
 -- Profils liés à auth.users (trigger on_auth_user_created), user_id nullable
 -- où convenu, pas d'historique_vues, boosts = source de vérité (pas de is_boosted
 -- sur annonces), logs.details en jsonb. Vues/clics : anti-usurpation user_id (RLS).
@@ -16,7 +16,7 @@ CREATE TYPE public.agence_statut AS ENUM ('active', 'suspendue');
 CREATE TYPE public.annonce_statut AS ENUM ('brouillon', 'publie', 'reserve', 'vendu', 'loue');
 CREATE TYPE public.contact_statut AS ENUM ('nouveau', 'en_cours', 'traite');
 CREATE TYPE public.boost_statut AS ENUM ('actif', 'expire', 'annule');
-CREATE TYPE public.abonnement_plan AS ENUM ('basique', 'premium', 'pro');
+CREATE TYPE public.abonnement_plan AS ENUM ('starter', 'basique', 'premium', 'pro');
 CREATE TYPE public.abonnement_statut AS ENUM ('actif', 'expire', 'annule');
 CREATE TYPE public.expediteur_type AS ENUM ('user', 'agence');
 
@@ -45,21 +45,39 @@ CREATE TABLE public.types_biens (
   CONSTRAINT types_biens_nom_unique UNIQUE (nom)
 );
 
+-- Seed des types de biens standards du dashboard
+INSERT INTO public.types_biens (nom) VALUES
+  ('Appartement'),
+  ('Villa'),
+  ('Duplex'),
+  ('Studio'),
+  ('Chambre'),
+  ('Immeuble'),
+  ('Local commercial'),
+  ('Terrain')
+ON CONFLICT (nom) DO NOTHING;
+
 CREATE TABLE public.agences (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   nom         text NOT NULL,
   description text,
   logo        text,
+  logo_url    text,
   adresse     text,
   ville       text,
+  ville_id    uuid REFERENCES public.villes (id) ON DELETE SET NULL,
   quartier    text,
   telephone   text,
   whatsapp    text,
   email       text,
+  show_phone  boolean NOT NULL DEFAULT true,
+  show_email  boolean NOT NULL DEFAULT true,
+  show_whatsapp boolean NOT NULL DEFAULT true,
   site_web    text,
   statut      public.agence_statut NOT NULL DEFAULT 'active',
   verification_status text NOT NULL DEFAULT 'pending'
     CHECK (verification_status IN ('pending', 'verified', 'rejected')),
+  numero_agrement_mclu text,
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 
@@ -72,9 +90,11 @@ CREATE TABLE public.users (
   telephone  text,
   initiales  text,
   role       public.user_role NOT NULL DEFAULT 'user',
+  is_owner   boolean NOT NULL DEFAULT false,
   statut     public.user_statut NOT NULL DEFAULT 'actif',
   agence_id  uuid REFERENCES public.agences(id) ON DELETE SET NULL,
   must_change_password boolean NOT NULL DEFAULT false,
+  has_seen_tutorial boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   last_seen  timestamptz,
   CONSTRAINT users_email_unique UNIQUE (email)
@@ -99,6 +119,7 @@ CREATE TABLE public.annonces (
   longitude        double precision,
   statut           public.annonce_statut NOT NULL DEFAULT 'brouillon',
   agence_id        uuid NOT NULL REFERENCES public.agences (id) ON DELETE CASCADE,
+  created_by       uuid REFERENCES public.users (id) ON DELETE SET NULL,
   created_at       timestamptz NOT NULL DEFAULT now(),
   updated_at       timestamptz NOT NULL DEFAULT now(),
   "transaction"    text CHECK ("transaction" IN ('louer', 'vendre', 'bail')),
@@ -357,6 +378,13 @@ CREATE INDEX idx_messages_user ON public.messages (user_id) WHERE user_id IS NOT
 CREATE INDEX idx_logs_user ON public.logs (user_id);
 CREATE INDEX idx_logs_created_at ON public.logs (created_at DESC);
 CREATE INDEX idx_logs_cible ON public.logs (cible_type, cible_id);
+
+-- Index pour pagination et recherche des agences
+CREATE INDEX IF NOT EXISTS idx_agences_created_at
+  ON public.agences (created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_agences_nom
+  ON public.agences USING gin (to_tsvector('simple', nom));
 
 -- JSONB : index GIN optionnel si filtrage fréquent sur clés
 CREATE INDEX idx_logs_details_gin ON public.logs USING gin (details);

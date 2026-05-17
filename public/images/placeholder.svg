@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600" role="img" aria-label="Placeholder">
+  <rect width="800" height="600" fill="#e5e7eb"/>
+  <path fill="#9ca3af" d="M400 180l200 160v200H200V340l200-160zm0 60L280 340v180h240V340L400 240z"/>
+</svg>

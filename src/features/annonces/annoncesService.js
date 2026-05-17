@@ -1,11 +1,11 @@
-// Service annonces — toutes les requêtes Supabase liées aux annonces sont ici
+// Service annonces - requetes Supabase liees aux annonces
 import { cache } from 'react'
 import { createClient } from '../../lib/supabase/server'
 
+export { formatWhatsApp, lienWhatsApp } from './phoneWhatsApp'
+
 /**
- * Récupère les 8 annonces publiées les plus récentes pour la homepage.
- * Jointures : agence, ville, quartier, type de bien, photos.
- * @returns {Promise<Array>} - tableau d'annonces ou tableau vide si erreur
+ * 8 annonces publiees les plus recentes (homepage).
  */
 export async function getAnnoncesPubliees() {
   const supabase = await createClient()
@@ -20,7 +20,7 @@ export async function getAnnoncesPubliees() {
       surface,
       chambres,
       created_at,
-      agences ( id, nom, logo ),
+      agences ( id, nom, logo, logo_url ),
       villes ( nom ),
       quartiers ( nom ),
       types_biens ( nom ),
@@ -31,7 +31,6 @@ export async function getAnnoncesPubliees() {
     .limit(8)
 
   if (error) {
-    // Logguer l'erreur mais ne pas crasher la page
     console.error('[annoncesService] getAnnoncesPubliees:', error.message)
     return []
   }
@@ -39,42 +38,11 @@ export async function getAnnoncesPubliees() {
   return data ?? []
 }
 
-// --- Utilitaires partagés (fiche annonce, metadata) — pas de duplication ailleurs
-
 export function formatPrix(prix) {
   if (!prix || prix === 0) return 'Prix sur demande'
   return new Intl.NumberFormat('fr-FR').format(prix) + ' FCFA'
 }
 
-/**
- * Formate un numéro de téléphone ivoirien pour wa.me
- * Gère : +225XXXXXXXX, 225XXXXXXXX, 00225XXXXXXXX, 0XXXXXXXX, XXXXXXXXX
- */
-export function formatWhatsApp(numero) {
-  if (!numero) return null
-  const clean = numero.replace(/[^\d+]/g, '')
-  if (clean.startsWith('+225')) return clean
-  if (clean.startsWith('00')) return '+' + clean.slice(2)
-  if (clean.startsWith('225')) return '+' + clean
-  if (clean.startsWith('0')) return '+225' + clean.slice(1)
-  return '+225' + clean
-}
-
-/**
- * Génère le lien WhatsApp avec message pré-rempli
- */
-export function lienWhatsApp(numero, titre) {
-  const tel = formatWhatsApp(numero)
-  if (!tel) return null
-  const message = encodeURIComponent(
-    `Bonjour, je suis intéressé(e) par votre bien : ${titre}. Est-il toujours disponible ?`
-  )
-  return `https://wa.me/${tel.replace('+', '')}?text=${message}`
-}
-
-/**
- * Coupe proprement un texte sans couper un mot en plein milieu
- */
 export function truncate(text, max = 120) {
   if (!text) return ''
   if (text.length <= max) return text
@@ -82,28 +50,20 @@ export function truncate(text, max = 120) {
   return trimmed.slice(0, trimmed.lastIndexOf(' ')) + '...'
 }
 
-/**
- * Affiche "Publié aujourd'hui", "Publié il y a X jours", ou la date
- */
 export function formatDatePublication(dateStr) {
   if (!dateStr) return null
   const days = Math.floor(
     (Date.now() - new Date(dateStr).getTime()) / (1000 * 60 * 60 * 24)
   )
-  if (days < 1) return "Publié aujourd'hui"
-  if (days < 7) return `Publié il y a ${days} jour${days > 1 ? 's' : ''}`
-  return `Publié le ${new Date(dateStr).toLocaleDateString('fr-FR')}`
+  if (days < 1) return "Publie aujourd'hui"
+  if (days < 7) return `Publie il y a ${days} jour${days > 1 ? 's' : ''}`
+  return `Publie le ${new Date(dateStr).toLocaleDateString('fr-FR')}`
 }
 
 /**
- * Récupère une annonce publiée par son id (slug = id pour le MVP).
- * Wrappé dans React cache() pour éviter le double appel DB entre
- * generateMetadata() et page().
- *
- * @param {string} slug - l'id UUID de l'annonce (params.slug de la route)
- * @returns {Promise<Object|null>} - l'annonce ou null si non trouvée / non publiée
+ * Annonce publiee par id UUID.
  */
-export const getAnnonceBySlug = cache(async function getAnnonceBySlug(slug) {
+export const getAnnonceById = cache(async function getAnnonceById(id) {
   const supabase = await createClient()
 
   const { data, error } = await supabase
@@ -122,30 +82,42 @@ export const getAnnonceBySlug = cache(async function getAnnonceBySlug(slug) {
       longitude,
       equipements,
       created_at,
-      agences ( id, nom, logo, whatsapp, telephone ),
+      agences (
+        id,
+        nom,
+        logo,
+        logo_url,
+        whatsapp,
+        telephone,
+        email,
+        show_phone,
+        show_email,
+        show_whatsapp,
+        verification_status
+      ),
       villes ( nom ),
       quartiers ( nom ),
       types_biens ( nom ),
       photos ( url, is_principale, ordre )
     `)
-    .eq('id', slug)
+    .eq('id', id)
     .eq('statut', 'publie')
     .single()
 
   if (error || !data) {
-    console.error('[annoncesService] getAnnonceBySlug:', error?.message)
+    console.error('[annoncesService] getAnnonceById:', error?.message)
     return null
   }
 
   return data
 })
 
-/**
- * Récupère les annonces publiées avec filtres, tri et pagination.
- * @returns {Promise<{ annonces: Array, total: number, error: string|null }>}
- */
+/** @deprecated utiliser getAnnonceById */
+export const getAnnonceBySlug = getAnnonceById
+
 export async function getAnnoncesFiltered({
   commune = null,
+  quartier = null,
   transaction = null,
   prix_min = null,
   prix_max = null,
@@ -170,7 +142,7 @@ export async function getAnnoncesFiltered({
       surface,
       chambres,
       created_at,
-      agences ( id, nom, logo ),
+      agences ( id, nom, logo, logo_url ),
       villes ( nom ),
       quartiers ( nom ),
       types_biens ( nom ),
@@ -181,6 +153,7 @@ export async function getAnnoncesFiltered({
     .eq('statut', 'publie')
 
   if (commune) query = query.eq('ville_id', commune)
+  if (quartier) query = query.eq('quartier_id', quartier)
   if (transaction) query = query.eq('transaction', transaction)
   if (prix_min !== null) query = query.gte('prix', prix_min)
   if (prix_max !== null) query = query.lte('prix', prix_max)
@@ -203,9 +176,6 @@ export async function getAnnoncesFiltered({
   return { annonces: data ?? [], total: count ?? 0, error: null }
 }
 
-/**
- * Villes + types de biens pour les filtres (une requête par cycle de rendu serveur).
- */
 export const getDonneesReferenceCached = cache(async function getDonneesReference() {
   const supabase = await createClient()
 
@@ -220,9 +190,45 @@ export const getDonneesReferenceCached = cache(async function getDonneesReferenc
   }
 })
 
-/**
- * Annonces publiées d'une agence, paginées (12 par page), tri date décroissante.
- */
+export async function getQuartiersByVille(villeId) {
+  if (!villeId) return []
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('quartiers')
+    .select('id, nom')
+    .eq('ville_id', villeId)
+    .order('nom')
+
+  if (error) {
+    console.error('[annoncesService] getQuartiersByVille:', error.message)
+    return []
+  }
+  return data ?? []
+}
+
+export async function getPublicStats() {
+  const supabase = await createClient()
+
+  const [pubRes, agRes, villesRows] = await Promise.all([
+    supabase.from('annonces').select('*', { count: 'exact', head: true }).eq('statut', 'publie'),
+    supabase
+      .from('agences')
+      .select('*', { count: 'exact', head: true })
+      .eq('statut', 'active')
+      .eq('verification_status', 'verified'),
+    supabase.from('annonces').select('ville_id').eq('statut', 'publie'),
+  ])
+
+  const rows = villesRows.data ?? []
+  const distinctVilles = new Set(rows.map((r) => r.ville_id).filter(Boolean))
+
+  return {
+    annoncesCount: pubRes.count ?? 0,
+    agencesCount: agRes.count ?? 0,
+    villesCount: distinctVilles.size,
+  }
+}
+
 export async function getAnnoncesByAgence(agenceId, page = 1) {
   const supabase = await createClient()
   const limit = 12
@@ -240,7 +246,7 @@ export async function getAnnoncesByAgence(agenceId, page = 1) {
       surface,
       chambres,
       created_at,
-      agences ( id, nom, logo ),
+      agences ( id, nom, logo, logo_url ),
       villes ( nom ),
       quartiers ( nom ),
       types_biens ( nom ),

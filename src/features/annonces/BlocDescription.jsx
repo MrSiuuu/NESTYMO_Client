@@ -1,14 +1,13 @@
-const LABELS_EQUIPEMENTS = {
-  climatisation: 'Climatisation',
-  eau_chaude: 'Eau chaude',
-  groupe_electrogene: 'Groupe électrogène',
-  gardien: 'Gardien',
-  piscine: 'Piscine',
-  parking: 'Parking / Garage',
-  internet: 'Internet / WiFi',
-  cuisine_equipee: 'Cuisine équipée',
-  terrasse: 'Terrasse / Balcon',
-  ascenseur: 'Ascenseur',
+'use client'
+
+import { useState } from 'react'
+
+function formatEquipmentLabel(key) {
+  if (!key || typeof key !== 'string') return key
+  return key
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ')
 }
 
 export default function BlocDescription({ annonce }) {
@@ -16,48 +15,54 @@ export default function BlocDescription({ annonce }) {
   const raw = annonce.equipements
   const equipements =
     raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {}
-  const actifs = Object.entries(equipements).filter(
-    ([_, v]) => v === true
-  )
+  const actifs = Object.entries(equipements).filter(([, v]) => v === true)
 
   const showDesc = Boolean(desc)
   const showEquip = actifs.length > 0
+  const [expanded, setExpanded] = useState(false)
 
   if (!showDesc && !showEquip) return null
 
   return (
     <div className="space-y-8">
       {showDesc ? (
-        <section className="rounded-xl bg-white p-6 shadow-md">
-          <h2 className="font-playfair text-xl font-semibold text-[#0F1923]">
-            Description
-          </h2>
-          <div className="mt-4 whitespace-pre-line text-[#0F1923] leading-relaxed">
+        <section className="rounded-xl border border-border bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-dark">Description</h2>
+          <div
+            className={`mt-4 whitespace-pre-line text-dark leading-relaxed ${
+              expanded ? '' : 'line-clamp-3'
+            }`}
+          >
             {annonce.description}
           </div>
+          {desc.length > 180 ? (
+            <button
+              type="button"
+              onClick={() => setExpanded((e) => !e)}
+              className="mt-2 cursor-pointer text-sm font-semibold text-primary hover:underline"
+            >
+              {expanded ? 'Voir moins' : 'Voir plus'}
+            </button>
+          ) : null}
         </section>
       ) : null}
 
       {showEquip ? (
-        <section className="rounded-xl bg-white p-6 shadow-md">
-          <h2 className="font-playfair text-xl font-semibold text-[#0F1923]">
-            Équipements
-          </h2>
-          <ul className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {actifs.map(([key]) => {
-              const label = LABELS_EQUIPEMENTS[key] ?? key
-              return (
-                <li
-                  key={key}
-                  className="rounded-lg border border-[#E8E3D8] bg-[#FAF6EF] px-3 py-2 text-sm text-[#0F1923]"
-                >
-                  {label}
-                </li>
-              )
-            })}
-          </ul>
+        <section className="rounded-xl border border-border bg-white p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-dark">Equipements</h2>
+          <div className="mt-4 flex flex-wrap gap-2">
+            {actifs.map(([key]) => (
+              <span
+                key={key}
+                className="rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-700"
+              >
+                {formatEquipmentLabel(key)}
+              </span>
+            ))}
+          </div>
         </section>
       ) : null}
     </div>
   )
 }
+

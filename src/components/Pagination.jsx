@@ -23,7 +23,6 @@ function buildAnnoncesUrl(sp, pageNum) {
   return qs ? `/annonces?${qs}` : '/annonces'
 }
 
-/** Pagination page agence : /agences/[id]?page= */
 function buildAgenceUrl(agenceId, sp, pageNum) {
   const base = spVersObjet(sp)
   delete base.page
@@ -44,7 +43,6 @@ function buildUrl(sp, pageNum, variant, agenceId) {
   return buildAnnoncesUrl(sp, pageNum)
 }
 
-/** Numéros + ellipses pour la pagination desktop */
 function numerosPages(page, totalPages) {
   if (totalPages <= 7) {
     return Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -78,29 +76,29 @@ export default function Pagination({
       <div className="flex items-center gap-3 md:hidden">
         {page <= 1 ? (
           <span className="cursor-not-allowed rounded-lg px-3 py-2 text-sm opacity-50">
-            ← Précédent
+            Precedent
           </span>
         ) : (
           <Link
             href={prevHref}
-            className="rounded-lg px-3 py-2 text-sm text-[#0F1923] hover:bg-[#E8E3D8]"
+            className="rounded-lg px-3 py-2 text-sm text-dark hover:bg-gray-100"
           >
-            ← Précédent
+            Precedent
           </Link>
         )}
-        <span className="text-sm text-[#6B7280]">
+        <span className="text-sm text-gray">
           Page {page} / {totalPages}
         </span>
         {page >= totalPages ? (
           <span className="cursor-not-allowed rounded-lg px-3 py-2 text-sm opacity-50">
-            Suivant →
+            Suivant
           </span>
         ) : (
           <Link
             href={nextHref}
-            className="rounded-lg px-3 py-2 text-sm text-[#0F1923] hover:bg-[#E8E3D8]"
+            className="rounded-lg px-3 py-2 text-sm text-dark hover:bg-gray-100"
           >
-            Suivant →
+            Suivant
           </Link>
         )}
       </div>
@@ -108,21 +106,21 @@ export default function Pagination({
       <div className="hidden items-center gap-1 md:flex">
         {page <= 1 ? (
           <span className="cursor-not-allowed rounded-lg px-3 py-2 text-sm opacity-50">
-            ← Précédent
+            Precedent
           </span>
         ) : (
           <Link
             href={prevHref}
-            className="rounded-lg px-3 py-2 text-sm text-[#0F1923] hover:bg-[#E8E3D8]"
+            className="rounded-lg px-3 py-2 text-sm text-dark hover:bg-gray-100"
           >
-            ← Précédent
+            Precedent
           </Link>
         )}
 
         {items.map((item, i) =>
           item === 'ellipsis' ? (
-            <span key={`e-${i}`} className="px-2 text-[#6B7280]">
-              …
+            <span key={`e-${i}`} className="px-2 text-gray">
+              ...
             </span>
           ) : (
             <Link
@@ -130,8 +128,8 @@ export default function Pagination({
               href={buildUrl(sp, item, variant, agenceId)}
               className={`min-w-[2.25rem] rounded-lg px-3 py-2 text-center text-sm ${
                 item === page
-                  ? 'bg-[#D97B00] font-medium text-white'
-                  : 'text-[#0F1923] hover:bg-[#E8E3D8]'
+                  ? 'bg-primary font-semibold text-white'
+                  : 'text-dark hover:bg-gray-100'
               }`}
             >
               {item}
@@ -141,17 +139,18 @@ export default function Pagination({
 
         {page >= totalPages ? (
           <span className="cursor-not-allowed rounded-lg px-3 py-2 text-sm opacity-50">
-            Suivant →
+            Suivant
           </span>
         ) : (
           <Link
             href={nextHref}
-            className="rounded-lg px-3 py-2 text-sm text-[#0F1923] hover:bg-[#E8E3D8]"
+            className="rounded-lg px-3 py-2 text-sm text-dark hover:bg-gray-100"
           >
-            Suivant →
+            Suivant
           </Link>
         )}
       </div>
     </div>
   )
 }
+

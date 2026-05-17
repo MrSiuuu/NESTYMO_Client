@@ -1,9 +1,5 @@
 import Link from 'next/link'
 
-function fcfa(n) {
-  return new Intl.NumberFormat('fr-FR').format(n) + ' FCFA'
-}
-
 function spVersObjet(sp) {
   if (!sp || typeof sp !== 'object') return {}
   const o = {}
@@ -14,7 +10,6 @@ function spVersObjet(sp) {
   return o
 }
 
-/** URL sans certaines clés + sans page (retour page 1) */
 function urlSansFiltres(sp, keysToRemove) {
   const base = spVersObjet(sp)
   const p = new URLSearchParams()
@@ -34,7 +29,17 @@ const LABEL_TX = {
   bail: 'Bail',
 }
 
-export default function ChipsFiltresActifs({ filtres, villes, typesBiens, searchParams }) {
+function fcfa(n) {
+  return new Intl.NumberFormat('fr-FR').format(n) + ' FCFA'
+}
+
+export default function ChipsFiltresActifs({
+  filtres,
+  villes,
+  typesBiens,
+  quartiers,
+  searchParams,
+}) {
   const f = filtres
   const chips = []
 
@@ -43,7 +48,16 @@ export default function ChipsFiltresActifs({ filtres, villes, typesBiens, search
     chips.push({
       key: 'commune',
       label: nom,
-      removeKeys: ['commune'],
+      removeKeys: ['commune', 'quartier'],
+    })
+  }
+  if (f.quartier) {
+    const nom =
+      quartiers.find((q) => q.id === f.quartier)?.nom ?? f.quartier
+    chips.push({
+      key: 'quartier',
+      label: nom,
+      removeKeys: ['quartier'],
     })
   }
   if (f.transaction) {
@@ -91,14 +105,15 @@ export default function ChipsFiltresActifs({ filtres, villes, typesBiens, search
         <Link
           key={c.key}
           href={urlSansFiltres(searchParams, c.removeKeys)}
-          className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#E8E3D8] px-3 py-1 text-xs text-[#0F1923]"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-gray-100 px-3 py-1 text-xs text-dark"
         >
           <span>{c.label}</span>
-          <span className="font-bold text-[#6B7280]" aria-hidden>
-            ×
+          <span className="font-bold text-gray" aria-hidden>
+            x
           </span>
         </Link>
       ))}
     </div>
   )
 }
+
