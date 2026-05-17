@@ -1,5 +1,6 @@
 export const revalidate = 60
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { ShieldCheck, BadgeCheck, Handshake } from 'lucide-react'
 import {
@@ -146,7 +147,16 @@ export default async function HomePage() {
           </div>
 
           <div className="relative hidden md:block">
-            <div className="aspect-[4/5] overflow-hidden rounded-3xl bg-gradient-to-br from-gray-200 via-gray-100 to-[#fde8e8]" />
+            <div className="relative aspect-[4/5] overflow-hidden rounded-3xl">
+              <Image
+                src="/images/Nestymo.png"
+                alt="Immobilier a Abidjan sur Nestymo"
+                fill
+                priority
+                className="object-cover"
+                sizes="(max-width: 768px) 0px, 50vw"
+              />
+            </div>
             <div className="absolute -left-6 top-8 flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-lg">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 text-[#E02020]">
                 <ShieldCheck className="h-5 w-5" aria-hidden />

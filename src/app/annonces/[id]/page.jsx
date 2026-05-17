@@ -1,4 +1,6 @@
 import { notFound } from 'next/navigation'
+import { headers } from 'next/headers'
+import { buildAnnoncePublicUrl } from '@/lib/siteUrl'
 import {
   getAnnonceById,
   formatPrix,
@@ -56,6 +58,9 @@ export default async function FicheAnnoncePage({ params }) {
 
   if (!annonce) notFound()
 
+  const headersList = await headers()
+  const annonceUrl = buildAnnoncePublicUrl(annonce.id, headersList)
+
   const photosSorted = [...(annonce.photos ?? [])].sort(
     (a, b) => (a.ordre ?? 0) - (b.ordre ?? 0)
   )
@@ -99,6 +104,7 @@ export default async function FicheAnnoncePage({ params }) {
                 agence={annonce.agences}
                 titre={annonce.titre}
                 annonceId={annonce.id}
+                annonceUrl={annonceUrl}
               />
             </aside>
           </section>
@@ -115,6 +121,7 @@ export default async function FicheAnnoncePage({ params }) {
           agence={annonce.agences}
           titre={annonce.titre}
           annonceId={annonce.id}
+          annonceUrl={annonceUrl}
         />
       </main>
 

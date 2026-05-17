@@ -1,23 +1,25 @@
 'use client'
 
 import Link from 'next/link'
-import { MessageCircle, Phone, Mail } from 'lucide-react'
+import { MessageCircle, Phone, Mail, MessageSquare } from 'lucide-react'
 import FormulaireContact from './FormulaireContact'
-import { lienWhatsApp } from './phoneWhatsApp'
+import { lienMailtoAnnonce, lienWhatsAppAnnonce } from './contactLinks'
 import { recordClicOnce } from '../tracking/clientTracking'
 import { useSessionContext } from '@/contexts/SessionContext'
 import AgenceAvatar from '@/components/AgenceAvatar'
 import BadgeVerifie from '@/components/BadgeVerifie'
 
-export default function BlocAgence({ agence, titre, annonceId, variant = 'default' }) {
+export default function BlocAgence({
+  agence,
+  titre,
+  annonceId,
+  annonceUrl,
+  variant = 'default',
+}) {
   const { user } = useSessionContext()
   const connecte = Boolean(user)
   const sidebar = variant === 'sidebar'
 
-  const whatsappUrl =
-    agence?.show_whatsapp !== false && agence?.whatsapp
-      ? lienWhatsApp(agence.whatsapp, titre)
-      : null
   const telPropre =
     agence?.show_phone !== false && agence?.telephone
       ? agence.telephone.replace(/\s/g, '')
@@ -25,6 +27,13 @@ export default function BlocAgence({ agence, titre, annonceId, variant = 'defaul
   const email =
     agence?.show_email !== false && agence?.email ? agence.email : null
   const verified = agence?.verification_status === 'verified'
+
+  const whatsappUrl =
+    agence?.show_whatsapp !== false && agence?.whatsapp && annonceUrl
+      ? lienWhatsAppAnnonce(agence.whatsapp, titre, annonceUrl)
+      : null
+  const mailtoUrl =
+    email && annonceUrl ? lienMailtoAnnonce(email, titre, annonceUrl) : null
 
   const cardClass = sidebar
     ? 'flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white p-6'
@@ -98,10 +107,27 @@ export default function BlocAgence({ agence, titre, annonceId, variant = 'defaul
           )
         ) : null}
 
+        <button
+          type="button"
+          disabled
+          aria-disabled="true"
+          aria-label="Envoyer un SMS — bientôt disponible"
+          title="Bientôt disponible"
+          className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl border border-gray-200 bg-gray-100 py-3 text-sm font-semibold text-gray-400"
+        >
+          <MessageSquare className="h-5 w-5 shrink-0 opacity-50" aria-hidden />
+          <span className="flex min-w-0 flex-wrap items-center justify-center gap-x-2 gap-y-1">
+            <span className="whitespace-nowrap">Envoyer un SMS</span>
+            <span className="shrink-0 rounded-full bg-gray-200/80 px-2 py-0.5 text-[10px] font-semibold uppercase leading-tight tracking-wide text-gray-500 sm:text-xs">
+              À venir
+            </span>
+          </span>
+        </button>
+
         {email ? (
           connecte ? (
             <a
-              href={`mailto:${email}`}
+              href={mailtoUrl}
               className="flex items-center justify-center gap-2 py-1 text-sm font-medium text-dark hover:text-primary"
             >
               <Mail className="h-4 w-4 shrink-0" aria-hidden />

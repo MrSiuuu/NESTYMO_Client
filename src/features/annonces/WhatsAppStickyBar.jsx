@@ -3,18 +3,26 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { MessageCircle } from 'lucide-react'
-import { lienWhatsApp } from './phoneWhatsApp'
+import { lienWhatsAppAnnonce } from './contactLinks'
 import { recordClicOnce } from '../tracking/clientTracking'
 import { useSessionContext } from '@/contexts/SessionContext'
 
-export default function WhatsAppStickyBar({ agence, titre, annonceId }) {
+export default function WhatsAppStickyBar({
+  agence,
+  titre,
+  annonceId,
+  annonceUrl,
+}) {
   const { user } = useSessionContext()
   const connecte = Boolean(user)
   const [visible, setVisible] = useState(true)
 
   const showWa =
     agence?.show_whatsapp !== false && Boolean(agence?.whatsapp)
-  const waUrl = showWa ? lienWhatsApp(agence.whatsapp, titre) : null
+  const waUrl =
+    showWa && annonceUrl
+      ? lienWhatsAppAnnonce(agence.whatsapp, titre, annonceUrl)
+      : null
 
   useEffect(() => {
     const el = document.getElementById('contact-whatsapp-bloc')
