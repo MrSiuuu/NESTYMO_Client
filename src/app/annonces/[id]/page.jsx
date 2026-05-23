@@ -1,3 +1,4 @@
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { notFound } from 'next/navigation'
 import { headers } from 'next/headers'
 import { buildAnnoncePublicUrl } from '@/lib/siteUrl'
@@ -21,6 +22,22 @@ import WhatsAppStickyBar from '../../../features/annonces/WhatsAppStickyBar'
 import AnnonceViewTracker from '../../../features/tracking/AnnonceViewTracker'
 
 export const revalidate = 60
+
+export async function generateStaticParams() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  if (!url || !key) return []
+
+  const supabase = createSupabaseClient(url, key)
+  const { data } = await supabase
+    .from('annonces')
+    .select('id')
+    .eq('statut', 'publie')
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  return (data ?? []).map((a) => ({ id: String(a.id) }))
+}
 
 export async function generateMetadata({ params }) {
   const { id } = await params

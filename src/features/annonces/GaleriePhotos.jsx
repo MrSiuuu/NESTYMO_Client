@@ -214,7 +214,7 @@ export default function GaleriePhotos({
     )
   }
 
-  const thumbs = list.slice(0, 8)
+  const thumbs = list.slice(0, 4)
 
   return (
     <div className={wrapClass}>
@@ -249,6 +249,8 @@ export default function GaleriePhotos({
                 src={photo.url}
                 alt=""
                 fill
+                loading="lazy"
+                fetchPriority="low"
                 className="object-cover object-center"
                 sizes="80px"
               />

@@ -11,7 +11,7 @@ import {
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import PropertyGrid from '../features/annonces/PropertyGrid'
-import PropertyCarousel from '../features/annonces/PropertyCarousel'
+import PropertyCarouselLazy from '../features/annonces/PropertyCarouselLazy'
 
 const PILLS_ORDER = [
   'Appartement',
@@ -149,7 +149,7 @@ export default async function HomePage() {
           <div className="relative hidden md:block">
             <div className="relative aspect-[4/5] overflow-hidden rounded-3xl">
               <Image
-                src="/images/Nestymo.png"
+                src="/images/Nestymo.webp"
                 alt="Immobilier a Abidjan sur Nestymo"
                 fill
                 priority
@@ -199,7 +199,7 @@ export default async function HomePage() {
           </Link>
         </div>
         <div className="md:hidden">
-          <PropertyCarousel annonces={annonces} />
+          <PropertyCarouselLazy annonces={annonces} />
         </div>
         <div className="hidden md:block">
           <PropertyGrid annonces={annonces} />

@@ -1,5 +1,7 @@
 // Service annonces - requetes Supabase liees aux annonces
 import { cache } from 'react'
+import { unstable_cache } from 'next/cache'
+import { createAnonClient } from '../../lib/supabase/anon'
 import { createClient } from '../../lib/supabase/server'
 
 export { formatWhatsApp, lienWhatsApp } from './phoneWhatsApp'
@@ -29,6 +31,7 @@ export async function getAnnoncesPubliees() {
     .eq('statut', 'publie')
     .order('created_at', { ascending: false })
     .limit(8)
+    .limit(1, { foreignTable: 'photos' })
 
   if (error) {
     console.error('[annoncesService] getAnnoncesPubliees:', error.message)
@@ -164,7 +167,7 @@ export async function getAnnoncesFiltered({
   else if (sort === 'prix_desc') query = query.order('prix', { ascending: false })
   else query = query.order('created_at', { ascending: false })
 
-  query = query.range(from, to)
+  query = query.range(from, to).limit(1, { foreignTable: 'photos' })
 
   const { data, error, count } = await query
 
@@ -176,19 +179,26 @@ export async function getAnnoncesFiltered({
   return { annonces: data ?? [], total: count ?? 0, error: null }
 }
 
-export const getDonneesReferenceCached = cache(async function getDonneesReference() {
-  const supabase = await createClient()
+export const getDonneesReferenceCached = unstable_cache(
+  async function getDonneesReference() {
+    const supabase = createAnonClient()
+    if (!supabase) {
+      return { villes: [], typesBiens: [] }
+    }
 
-  const [{ data: villes }, { data: typesBiens }] = await Promise.all([
-    supabase.from('villes').select('id, nom').order('nom'),
-    supabase.from('types_biens').select('id, nom').order('nom'),
-  ])
+    const [{ data: villes }, { data: typesBiens }] = await Promise.all([
+      supabase.from('villes').select('id, nom').order('nom'),
+      supabase.from('types_biens').select('id, nom').order('nom'),
+    ])
 
-  return {
-    villes: villes ?? [],
-    typesBiens: typesBiens ?? [],
-  }
-})
+    return {
+      villes: villes ?? [],
+      typesBiens: typesBiens ?? [],
+    }
+  },
+  ['ref-villes-types'],
+  { revalidate: 3600 }
+)
 
 export async function getQuartiersByVille(villeId) {
   if (!villeId) return []

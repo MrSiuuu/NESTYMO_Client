@@ -42,6 +42,7 @@ export default function PropertyCard({ annonce, priority, initialFavori = false 
       </div>
       <Link
         href={`/annonces/${annonce.id}`}
+        prefetch={false}
         className="block"
       >
         <article>
